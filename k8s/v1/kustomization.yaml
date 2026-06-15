@@ -20,4 +20,4 @@ resources:
 configMapGenerator:
   - name: game-config
     literals:
-      - GAME_COLOR=#7c3aed
+      - GAME_COLOR=#16a34a
