@@ -1,0 +1,15 @@
+# k8s/v1/frontend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: alchemist-frontend
+  labels:
+    app: alchemist-frontend
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  selector:
+    app: alchemist-frontend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

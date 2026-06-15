@@ -1,0 +1,14 @@
+{
+  "name": "alchemist-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Alchemist Battle - Backend v1 (placar individual)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.12.0"
+  }
+}

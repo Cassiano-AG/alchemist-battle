@@ -1,0 +1,64 @@
+# k8s/database/postgrescluster.yaml
+# Fase 3: banco provisionado via Operador (Crunchy Postgres for Kubernetes).
+#
+# Pré-requisito: instalar o operador "Crunchy Postgres for Kubernetes"
+# pelo OperatorHub (console OpenShift > Operators > OperatorHub), escopo
+# "All namespaces", ANTES de aplicar este CR / sincronizar via ArgoCD.
+#
+# Ao reconciliar este CR, o operador cria automaticamente o Secret
+# "alchemist-db-pguser-alchemist" (chaves: host, port, dbname, user,
+# password), que é exatamente o que os Deployments do backend consomem.
+# PostgreSQL 15+ não permite mais CREATE no schema "public" para usuários
+# comuns. Este ConfigMap roda uma única vez na criação do cluster e entrega
+# o schema ao usuário da aplicação.
+# (Em clusters já criados, rode manualmente:
+#   oc exec -it <pod-primario> -c database -- psql -d alchemist \
+#     -c "ALTER SCHEMA public OWNER TO alchemist;")
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: alchemist-db-init
+  namespace: alchemist-battle
+  labels:
+    app.kubernetes.io/part-of: alchemist-battle
+data:
+  init.sql: |
+    \c alchemist
+    ALTER SCHEMA public OWNER TO alchemist;
+---
+apiVersion: postgres-operator.crunchydata.com/v1beta1
+kind: PostgresCluster
+metadata:
+  name: alchemist-db
+  namespace: alchemist-battle
+  labels:
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  postgresVersion: 16
+  databaseInitSQL:
+    name: alchemist-db-init
+    key: init.sql
+  instances:
+    - name: instance1
+      replicas: 2          # HA: failover automático gerenciado pelo operador
+      dataVolumeClaimSpec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+  users:
+    - name: alchemist
+      databases:
+        - alchemist
+  backups:
+    pgbackrest:
+      repos:
+        - name: repo1
+          volume:
+            volumeClaimSpec:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: 1Gi

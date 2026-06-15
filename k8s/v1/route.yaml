@@ -1,0 +1,17 @@
+# k8s/v1/route.yaml
+# Route nativa do OpenShift (preferida ao Ingress).
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: alchemist-battle
+  labels:
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  to:
+    kind: Service
+    name: alchemist-frontend
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

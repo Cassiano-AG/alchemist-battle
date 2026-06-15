@@ -1,0 +1,100 @@
+# k8s/v1/backend-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: alchemist-backend
+  labels:
+    app: alchemist-backend
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  # 3 réplicas: demo de resiliência ("mata-pod") sem indisponibilidade.
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0   # nunca remove um pod antes de o substituto estar Ready
+  selector:
+    matchLabels:
+      app: alchemist-backend
+  template:
+    metadata:
+      labels:
+        app: alchemist-backend
+        version: v1
+    spec:
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: backend
+          # Troque pelo seu registry (ex.: quay.io/<usuario>/alchemist-backend:v1)
+          image: image-registry.openshift-image-registry.svc:5000/alchemist-battle/alchemist-backend-v1:latest
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            # Secret gerado automaticamente pelo Crunchy Postgres Operator
+            # (ou criado manualmente no cenário sem operador - ver k8s/database/).
+            - name: PG_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: alchemist-db-pguser-alchemist
+                  key: host
+            - name: PG_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: alchemist-db-pguser-alchemist
+                  key: port
+            - name: PG_DATABASE
+              valueFrom:
+                secretKeyRef:
+                  name: alchemist-db-pguser-alchemist
+                  key: dbname
+            - name: PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: alchemist-db-pguser-alchemist
+                  key: user
+            - name: PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: alchemist-db-pguser-alchemist
+                  key: password
+          envFrom:
+            - configMapRef:
+                name: game-config   # kustomize injeta o nome com hash
+          # Readiness: valida conexão com o banco. Se falhar, o pod sai do
+          # balanceamento do Service sem ser reiniciado.
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 2
+            failureThreshold: 2
+          # Liveness: processo vivo. Se falhar, o kubelet reinicia o container.
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 2
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 96Mi
+            limits:
+              cpu: 250m
+              memory: 256Mi
+          # Pequena pausa antes do SIGTERM: dá tempo de o endpoint ser removido
+          # do Service/Router antes de o processo parar de aceitar conexões.
+          lifecycle:
+            preStop:
+              exec:
+                command: ["sh", "-c", "sleep 5"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]

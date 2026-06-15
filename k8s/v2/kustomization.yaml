@@ -1,0 +1,20 @@
+# k8s/v2/kustomization.yaml
+# Fase 2: aplicar SOBRE a v1, com o jogo rodando: oc apply -k k8s/v2
+# Os Deployments têm os MESMOS nomes da v1 -> o OpenShift executa
+# RollingUpdate (maxUnavailable: 0) guiado pelos probes: zero downtime.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: alchemist-battle
+
+resources:
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - route.yaml
+
+configMapGenerator:
+  - name: game-config
+    literals:
+      - GAME_COLOR=#f59e0b

@@ -1,0 +1,33 @@
+# argocd/application-game.yaml
+# Application do ArgoCD para o jogo (frontend + backend + route).
+#
+# Roteiro da demo GitOps:
+#   1. Aplicar este arquivo: oc apply -f argocd/application-game.yaml
+#   2. Mostrar o app "Synced/Healthy" na UI do ArgoCD.
+#   3. Editar GAME_COLOR em k8s/v1/kustomization.yaml no Git -> commit/push.
+#      O configMapGenerator gera novo hash -> ArgoCD sincroniza -> rolling
+#      update automático -> a cor do jogo muda sem nenhum comando manual.
+#   4. Para promover a v2 via GitOps: mudar "path" abaixo para k8s/v2
+#      (commit no Git) -> ArgoCD faz o RollingUpdate com zero downtime.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alchemist-game
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Cassiano-AG/alchemist-battle.git
+    targetRevision: main
+    path: k8s/v1          # mude para k8s/v2 para promover a versão via Git
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: alchemist-battle
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

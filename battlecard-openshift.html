@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Battlecard — OpenShift vs Kubernetes Gerenciado (EKS · AKS · GKE)</title>
+<style>
+:root{
+  --bg:#0a0d14;--bg2:#0f131c;--surface:#161b28;--hover:#1e2536;
+  --text:#fff;--text2:rgba(255,255,255,.72);--muted:rgba(255,255,255,.5);
+  --accent:#ee0000;--accent2:#3b82f6;
+  --win:#10b981;--lose:#ef4444;--tie:#f59e0b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'Segoe UI',sans-serif;line-height:1.6;padding-bottom:60px}
+header{padding:28px 24px 18px;border-bottom:1px solid #ffffff14;background:var(--bg2)}
+header h1{font-size:1.5rem}
+header p{color:var(--muted);font-size:.85rem;margin-top:4px}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;padding:16px 24px;position:sticky;top:0;background:var(--bg);z-index:10;border-bottom:1px solid #ffffff10}
+.tab{background:var(--surface);color:var(--text2);border:1px solid #ffffff14;border-radius:10px;padding:9px 16px;cursor:pointer;font-size:.9rem;font-weight:600;transition:all .2s}
+.tab:hover{background:var(--hover);color:var(--text)}
+.tab.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab-content{display:none;padding:24px;max-width:1080px;margin:0 auto}
+.tab-content.active{display:block}
+h2{font-size:1.2rem;margin:26px 0 12px;color:var(--text)}
+h2:first-child{margin-top:0}
+.card{background:var(--surface);border:1px solid #ffffff12;border-radius:12px;padding:18px 20px;margin-bottom:14px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:760px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:.88rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #ffffff10;vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:.78rem;letter-spacing:.5px;text-transform:uppercase}
+.w{color:var(--win);font-weight:700}.l{color:var(--lose);font-weight:700}.t{color:var(--tie);font-weight:700}
+.pill{display:inline-block;padding:2px 10px;border-radius:999px;font-size:.72rem;font-weight:700;letter-spacing:.5px}
+.pill.win{background:#10b98122;color:var(--win)}.pill.lose{background:#ef444422;color:var(--lose)}
+.talk{border-left:3px solid var(--accent2);padding:10px 14px;background:#3b82f60d;border-radius:0 8px 8px 0;margin:10px 0;font-style:italic;color:var(--text2)}
+.talk strong{color:var(--text);font-style:normal}
+.mine{border-left:3px solid var(--tie);padding:8px 14px;margin:8px 0;background:#f59e0b0d;border-radius:0 8px 8px 0}
+ul{padding-left:20px;color:var(--text2)}
+li{margin:6px 0}
+.muted{color:var(--muted);font-size:.82rem}
+.demo-tie{background:#10b9810d;border:1px solid #10b98133;border-radius:10px;padding:12px 16px;margin:10px 0}
+.demo-tie b{color:var(--win)}
+.warn-honesto{background:#f59e0b10;border:1px solid #f59e0b33;border-radius:10px;padding:12px 16px;margin:10px 0;color:var(--text2)}
+footer{padding:24px;text-align:center;color:var(--muted);font-size:.78rem}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>⚔️ Battlecard — OpenShift vs Kubernetes Gerenciado das Nuvens</h1>
+  <p>Service IT · Red Hat OpenShift | Concorrentes: EKS (AWS) · AKS (Azure) · GKE (Google) · K8s "puro" | Junho/2026</p>
+</header>
+
+<nav class="tabs">
+  <button class="tab active" data-tab="matriz">📊 Matriz</button>
+  <button class="tab" data-tab="frame">🎯 O Argumento Central</button>
+  <button class="tab" data-tab="eks">EKS (AWS)</button>
+  <button class="tab" data-tab="aks">AKS (Azure)</button>
+  <button class="tab" data-tab="gke">GKE (Google)</button>
+  <button class="tab" data-tab="diy">K8s Puro (DIY)</button>
+  <button class="tab" data-tab="demo">🎮 A Demo como Prova</button>
+</nav>
+
+<!-- ============ MATRIZ ============ -->
+<section id="matriz" class="tab-content active">
+  <h2>Comparação direta</h2>
+  <div class="card">
+  <table>
+    <tr><th>Dimensão</th><th>OpenShift</th><th>EKS / AKS / GKE</th></tr>
+    <tr><td>O que você recebe</td><td class="w">Plataforma completa: K8s + registry + builds + GitOps + pipelines + console dev + monitoramento + segurança, testados juntos</td><td class="l">Control plane gerenciado; o resto é montagem (10–15 ferramentas/serviços a integrar e manter)</td></tr>
+    <tr><td>Onde roda</td><td class="w">On-prem, AWS, Azure, GCP, bare metal, edge — idêntico em todos</td><td class="l">Só na nuvem do fornecedor</td></tr>
+    <tr><td>Segurança por padrão</td><td class="w">Containers não-root obrigatórios (SCC), OAuth/RBAC integrados, compliance operator</td><td class="t">Pod Security/policies existem, mas é você quem configura e mantém</td></tr>
+    <tr><td>Suporte</td><td class="w">Um fornecedor do SO ao operador (RHEL CoreOS → K8s → operadores → app runtime)</td><td class="l">Suporte cobre o serviço; o que roda dentro do cluster é problema seu</td></tr>
+    <tr><td>Ciclo de vida K8s</td><td class="w">EUS: até 24 meses por versão, incluso; upgrade de cluster + operadores testados em conjunto</td><td class="l">~14 meses; EKS joga automaticamente p/ extended support a <b>6× o preço</b> ($0,60/h = $438/mês por cluster)</td></tr>
+    <tr><td>Dia 2 (banco, mensageria...)</td><td class="w">OperatorHub certificado e suportado dentro da plataforma</td><td class="t">Add-ons/marketplaces variados, suporte fragmentado</td></tr>
+    <tr><td>Custo de entrada</td><td class="l">Subscription por core — maior na largada</td><td class="w">Control plane: AKS grátis, EKS/GKE $0,10/h. Entrada barata</td></tr>
+    <tr><td>Integração c/ serviços da nuvem</td><td class="t">Boa (operadores p/ AWS/Azure/GCP), mas é integração</td><td class="w">Nativa e profunda (IAM, VPC, observabilidade da própria nuvem)</td></tr>
+    <tr><td>Nodes serverless</td><td class="l">Não tem equivalente direto</td><td class="w">Fargate (EKS) / Autopilot (GKE)</td></tr>
+    <tr><td>VMs + containers juntos</td><td class="w">OpenShift Virtualization incluso (migração de VMware)</td><td class="l">Sem equivalente integrado</td></tr>
+  </table>
+  </div>
+  <p class="muted">Honestidade vende: os três pontos vermelhos do OpenShift são reais — reconheça-os e reposicione no TCO (aba "Argumento Central").</p>
+</section>
+
+<!-- ============ FRAME ============ -->
+<section id="frame" class="tab-content">
+  <h2>Nunca dispute "K8s vs K8s" — mude o terreno</h2>
+  <div class="card">
+    <p>Se a conversa for "qual Kubernetes é melhor", o cliente compara preço de control plane e a nuvem ganha. O terreno certo:</p>
+    <div class="talk"><strong>Fala-mestra:</strong> "EKS, AKS e GKE são ótimos Kubernetes. Mas Kubernetes é uns 20% da plataforma que vocês precisam operar. Quem entrega os outros 80% — registry, esteira, GitOps, observabilidade, política de segurança, gestão de operadores, upgrade coordenado de tudo isso? Na nuvem, a resposta é: <em>vocês</em>, montando e mantendo um quebra-cabeça de 10 a 15 peças. No OpenShift, a resposta é: <em>já vem, testado junto, com um suporte só</em>."</div>
+    <p style="margin-top:10px">É a diferença entre <b>comprar um carro</b> e <b>comprar um motor excelente</b> com um catálogo de peças.</p>
+  </div>
+
+  <h2>Os 5 pilares (decore estes)</h2>
+  <div class="card"><b>1. Plataforma completa vs kit de montagem</b><ul>
+    <li>Managed K8s = control plane. Falta: registry, build, CI/CD, GitOps, ingress avançado, console de dev, monitoramento, política. Cada peça = escolha + integração + manutenção + upgrade.</li>
+    <li>Quem mantém essa colagem é um time de platform engineering que o cliente paga sem perceber. <b>O TCO está nas pessoas, não na licença.</b></li></ul></div>
+  <div class="card"><b>2. Híbrido e portabilidade real</b><ul>
+    <li>Mesma plataforma, mesmas políticas, mesmos pipelines on-prem e em qualquer nuvem. Pressões reais no Brasil: custo de egress, soberania/regulação (BACEN, LGPD), repatriação de workloads.</li>
+    <li>Tudo que se constrói em cima de EKS/AKS/GKE amarra mais fundo naquela nuvem (IAM, ALB, IRSA, add-ons proprietários).</li></ul></div>
+  <div class="card"><b>3. "Já estamos na AWS/Azure" não é objeção — é deixa</b><ul>
+    <li><b>ROSA</b> (Red Hat OpenShift Service on AWS) e <b>ARO</b> (Azure Red Hat OpenShift): OpenShift <i>gerenciado</i>, dentro da nuvem do cliente, <b>na fatura da nuvem</b> (consome commit/EDP/MACC), operado e suportado em conjunto por Red Hat + AWS/Microsoft, SLA 99,95%.</li>
+    <li>Fala: "Não estou pedindo para sair da AWS. Estou propondo subir o nível da plataforma <i>dentro</i> dela — pago com o commit que vocês já têm."</li></ul></div>
+  <div class="card"><b>4. Segurança e suporte de uma mão só</b><ul>
+    <li>Por padrão: nada roda como root (SCC restricted-v2), RBAC + OAuth corporativo integrados, cadeia suportada do kernel ao operador.</li>
+    <li>Pergunta de ouro: "quando o problema estiver <i>entre</i> a aplicação e o cluster, quem vocês acionam?" Na nuvem, o suporte termina na borda do serviço.</li></ul></div>
+  <div class="card"><b>5. Ciclo de vida sem pedágio</b><ul>
+    <li>EKS: versão sai do standard support (~14 meses) → <b>extended support automático a $0,60/h = $438/mês por cluster</b> (6×). AKS/GKE: tiers premium no mesmo patamar.</li>
+    <li>OpenShift EUS: até 24 meses inclusos, e o upgrade move plataforma + operadores como um conjunto testado.</li></ul></div>
+
+  <h2>Objeções clássicas → respostas</h2>
+  <div class="card">
+    <p><b>"OpenShift é caro."</b></p>
+    <div class="talk">"Comparado a quê? Ao control plane de $73/mês — ou ao time de 4–6 engenheiros montando e mantendo registry, esteira, GitOps, observabilidade e segurança em cima dele? Vamos colocar o custo de pessoas e do extended support na mesma planilha e comparar TCO de 3 anos."</div>
+    <p style="margin-top:14px"><b>"Não queremos lock-in da Red Hat."</b></p>
+    <div class="talk">"OpenShift é Kubernetes certificado CNCF — seus YAMLs, Helm charts e imagens rodam sem mudança (a nossa demo usa Deployment, Service e kustomize padrão). O lock-in de verdade está nas amarras invisíveis: IAM, ALB, add-ons proprietários de cada nuvem. OpenShift é a camada que torna a nuvem trocável."</div>
+    <p style="margin-top:14px"><b>"A nuvem gerencia tudo para a gente."</b></p>
+    <div class="talk">"Gerencia o control plane. Quem gerenciou o resto até hoje? Quantos scripts, quantas horas de sustentação? — e quem responde quando uma atualização do cluster quebra uma das 12 ferramentas em volta?"</div>
+  </div>
+
+  <h2>Quando o concorrente ganha (saiba recuar)</h2>
+  <div class="warn-honesto">Workload 100% single-cloud, time pequeno sem requisitos de compliance, uso intenso de serverless (Fargate/Autopilot), ou startup só-AWS sem on-prem: o managed K8s puro pode bastar — diga isso com franqueza e deixe a porta aberta (ROSA/ARO quando crescerem). Credibilidade hoje vale mais que o deal errado.</div>
+</section>
+
+<!-- ============ EKS ============ -->
+<section id="eks" class="tab-content">
+  <h2>Amazon EKS</h2>
+  <div class="card"><b>Perfil:</b> K8s gerenciado da AWS. Forte em integração nativa (IAM/IRSA, VPC, ALB), Karpenter (autoscaling de nodes referência do mercado), Fargate (nodes serverless). Control plane $0,10/h (~$73/mês).</div>
+  <div class="grid2">
+    <div class="card"><span class="pill lose">ONDE ELE GANHA</span><ul>
+      <li>Cliente já é heavy-AWS (dados, IAM, rede)</li>
+      <li>Karpenter/Fargate p/ elasticidade fina</li>
+      <li>Entrada barata e cobrança na fatura AWS</li></ul></div>
+    <div class="card"><span class="pill win">ONDE VOCÊ GANHA</span><ul>
+      <li>EKS é o mais "cru" dos três: até add-on de ingress/ALB e EBS CSI são instalações suas</li>
+      <li><b>Extended support automático a 6× o preço</b> ($438/mês/cluster) quando a versão envelhece — pedágio por não conseguir atualizar</li>
+      <li>Suporte AWS não cobre o que roda dentro do cluster</li>
+      <li>Zero história fora da AWS (on-prem/edge = Outposts $$$)</li></ul></div>
+  </div>
+  <div class="card"><b>Landmines (pergunte, não afirme):</b>
+    <div class="mine">"Quantos clusters de vocês já caíram no extended support do EKS? Sabem que é cobrança automática de $438/mês por cluster?"</div>
+    <div class="mine">"Quantos add-ons vocês instalaram e mantêm por conta (ALB controller, ExternalDNS, cert-manager, ArgoCD, Prometheus...)? Quem testa esse conjunto a cada upgrade?"</div>
+    <div class="mine">"Se a área de dados pedir on-prem por custo ou regulação, qual parte dessa stack se aproveita?"</div></div>
+  <div class="card"><b>Contra-ataque:</b> <span class="talk" style="display:block;margin-top:8px">"Se AWS é estratégica, perfeito: <b>ROSA</b> — OpenShift gerenciado em conjunto por Red Hat e AWS, dentro da conta de vocês, consumindo o commit AWS, com SLA de 99,95%. Vocês mantêm a AWS e ganham a plataforma completa."</span></div>
+</section>
+
+<!-- ============ AKS ============ -->
+<section id="aks" class="tab-content">
+  <h2>Azure AKS</h2>
+  <div class="card"><b>Perfil:</b> K8s gerenciado da Microsoft. Control plane <b>grátis</b> no tier free (argumento de preço mais agressivo). Integração forte com Entra ID/AD, Azure DevOps, Defender. Tier premium (suporte estendido) a $0,60/h.</div>
+  <div class="grid2">
+    <div class="card"><span class="pill lose">ONDE ELE GANHA</span><ul>
+      <li>Preço de entrada imbatível (control plane $0)</li>
+      <li>Casa Microsoft: AD/Entra, Office, Azure DevOps</li>
+      <li>Acordos corporativos (MACC) já assinados</li></ul></div>
+    <div class="card"><span class="pill win">ONDE VOCÊ GANHA</span><ul>
+      <li>"Grátis" = só o control plane; a plataforma em volta continua sendo projeto seu</li>
+      <li>Histórico de upgrades/API deprecations dolorosos; suporte estendido vira tier pago</li>
+      <li>Multi-cloud/on-prem: Azure Arc é gestão, não uma plataforma consistente</li>
+      <li>Segurança default mais permissiva que SCC</li></ul></div>
+  </div>
+  <div class="card"><b>Landmines:</b>
+    <div class="mine">"O control plane é grátis — e quanto custou o time que montou a esteira, o GitOps e a observabilidade em volta dele no último ano?"</div>
+    <div class="mine">"Como foi o último upgrade de versão do AKS? Quantas coisas quebraram em volta?"</div></div>
+  <div class="card"><b>Contra-ataque:</b> <span class="talk" style="display:block;margin-top:8px">"<b>ARO</b> — Azure Red Hat OpenShift — é serviço de primeira classe do Azure, operado por Microsoft + Red Hat juntos, cobrado na fatura Azure e elegível ao MACC. O cliente não escolhe entre Azure e OpenShift: leva os dois."</span></div>
+</section>
+
+<!-- ============ GKE ============ -->
+<section id="gke" class="tab-content">
+  <h2>Google GKE</h2>
+  <div class="card"><b>Perfil:</b> tecnicamente o K8s gerenciado mais maduro (o Google criou o K8s). Autopilot = nodes 100% gerenciados. Control plane $0,10/h. Menos presente em enterprise Brasil que AWS/Azure.</div>
+  <div class="grid2">
+    <div class="card"><span class="pill lose">ONDE ELE GANHA</span><ul>
+      <li>Excelência técnica do K8s puro + Autopilot</li>
+      <li>Workloads de dados/IA na stack Google</li></ul></div>
+    <div class="card"><span class="pill win">ONDE VOCÊ GANHA</span><ul>
+      <li>Mesmo gap de plataforma dos outros (Anthos/GDC nunca decolou como história híbrida no enterprise)</li>
+      <li>Ecossistema enterprise e parceiros menor no Brasil — quem dá a mão na operação?</li>
+      <li>Suporte: mesma fronteira ("dentro do cluster é com vocês")</li></ul></div>
+  </div>
+  <div class="card"><b>Landmine:</b>
+    <div class="mine">"O GKE é ótimo K8s — e o resto da operação de vocês mora onde? Quem suporta o conjunto, aqui, em português, com SLA?"</div></div>
+  <div class="card"><b>Contra-ataque:</b> <span class="talk" style="display:block;margin-top:8px">"OpenShift Dedicated roda no GCP se o cliente quiser ficar lá — e se a estratégia for multi-cloud de verdade, OpenShift é a única plataforma idêntica nas três nuvens e no datacenter."</span></div>
+</section>
+
+<!-- ============ DIY ============ -->
+<section id="diy" class="tab-content">
+  <h2>Kubernetes "puro" (kubeadm/upstream)</h2>
+  <div class="card">O mais fácil de vencer — mas não subestime o orgulho do time que o montou. Nunca ataque o trabalho deles; elogie e reposicione:</div>
+  <div class="talk">"O cluster de vocês funciona — isso prova que o time é bom. A pergunta é se vocês querem continuar gastando esse time em manter Kubernetes vivo (upgrade a cada 4 meses, CVE de madrugada, etcd backup, certificados) ou apontá-lo para o que gera receita, com a plataforma virando responsabilidade de um fornecedor com SLA."</div>
+  <div class="card"><b>Fatos:</b><ul>
+    <li>Upstream: 3 releases/ano, ~14 meses de suporte por versão, sem ninguém para acionar às 3h da manhã</li>
+    <li>Sem trilha de auditoria/compliance suportada (quem assina o relatório para o regulador?)</li>
+    <li>Bus factor: a operação mora na cabeça de 2–3 pessoas</li></ul></div>
+  <div class="card"><b>Landmine:</b><div class="mine">"Quem do time atualizou o cluster na última vez, quanto tempo levou — e o que acontece se essa pessoa pedir demissão?"</div></div>
+</section>
+
+<!-- ============ DEMO ============ -->
+<section id="demo" class="tab-content">
+  <h2>Use a Batalha do Backlog como prova viva</h2>
+  <p class="muted" style="margin-bottom:14px">Cada momento da demo refuta um argumento da concorrência — narre nesses termos:</p>
+  <div class="demo-tie"><b>Build das imagens no cluster (BuildConfig/S2I)</b> — "Construímos as 4 imagens sem Docker instalado e sem esteira externa. No EKS/AKS/GKE isso seria CodeBuild/ADO/Cloud Build + registry + permissões — três serviços a mais para integrar."</div>
+  <div class="demo-tie"><b>Route com TLS em 5 linhas</b> — "No managed K8s: instalar ALB/AGIC controller, cert-manager, ExternalDNS. Aqui: um objeto nativo."</div>
+  <div class="demo-tie"><b>Mata-pod sem ninguém perceber</b> — "Isso é K8s padrão — funciona igual lá. A diferença é que aqui os probes, as políticas e o restante da plataforma vieram juntos e suportados."</div>
+  <div class="demo-tie"><b>Containers não-root por obrigação (SCC)</b> — "Nosso nginx e Node rodam sem root porque a plataforma EXIGE. No managed K8s, root por padrão até alguém configurar política."</div>
+  <div class="demo-tie"><b>PostgreSQL via Operador (failover ao vivo)</b> — "Matei o primário e o jogo nem piscou. Operador certificado, instalado do catálogo da plataforma, suportado. Na nuvem: RDS (lock-in) ou monte-você-mesmo."</div>
+  <div class="demo-tie"><b>Rolling update v1→v2 com a plateia jogando</b> — "Deploy em produção sem janela. E o mesmo YAML kustomize que vocês viram funciona em qualquer K8s — portabilidade na prática."</div>
+  <div class="demo-tie"><b>GitOps/ArgoCD (Fase 3)</b> — "OpenShift GitOps vem incluso e suportado. Na nuvem, ArgoCD é mais um software que vocês instalam, atualizam e suportam sozinhos."</div>
+  <div class="demo-tie"><b>E o gancho final</b> — "Tudo isso rodou num cluster que eu mesmo provisionei. Se vocês preferirem nem operar o cluster: ROSA/ARO — OpenShift como serviço, dentro da nuvem de vocês, na fatura de vocês."</div>
+</section>
+
+<footer>Service IT · uso interno · atualize mensalmente (preços e features de nuvem mudam rápido) · Jun/2026</footer>
+
+<script>
+document.querySelectorAll('.tab').forEach(t=>{
+  t.addEventListener('click',()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(x=>x.classList.remove('active'));
+    t.classList.add('active');
+    document.getElementById(t.dataset.tab).classList.add('active');
+  });
+});
+</script>
+</body>
+</html>

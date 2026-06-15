@@ -1,0 +1,28 @@
+# argocd/application-database.yaml
+# Application do ArgoCD para o banco (CR do Crunchy Operator).
+# No OpenShift GitOps, as Applications vivem no namespace "openshift-gitops".
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: alchemist-database
+  namespace: openshift-gitops
+  labels:
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/Cassiano-AG/alchemist-battle.git
+    targetRevision: main
+    path: k8s/database
+    directory:
+      # Sincroniza apenas o CR do operador; o fallback é uso manual.
+      include: postgrescluster.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: alchemist-battle
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true   # se alguém alterar/apagar no cluster, o ArgoCD restaura do Git
+    syncOptions:
+      - CreateNamespace=true

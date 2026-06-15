@@ -1,0 +1,15 @@
+# k8s/v2/backend-service.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: alchemist-backend
+  labels:
+    app: alchemist-backend
+    app.kubernetes.io/part-of: alchemist-battle
+spec:
+  selector:
+    app: alchemist-backend
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http

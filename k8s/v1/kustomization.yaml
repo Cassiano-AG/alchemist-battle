@@ -1,0 +1,23 @@
+# k8s/v1/kustomization.yaml
+# Aplicar manualmente (Fase 1): oc apply -k k8s/v1
+# Ou via ArgoCD (Fase 3): a Application aponta para esta pasta.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: alchemist-battle
+
+resources:
+  - backend-deployment.yaml
+  - backend-service.yaml
+  - frontend-deployment.yaml
+  - frontend-service.yaml
+  - route.yaml
+
+# configMapGenerator gera um sufixo hash no nome do ConfigMap.
+# Quando GAME_COLOR muda no Git, o hash muda -> o Deployment muda ->
+# rolling update automático. É isso que torna a demo de GitOps (mudar a
+# cor e ver o ArgoCD sincronizar + pods atualizarem) 100% automática.
+configMapGenerator:
+  - name: game-config
+    literals:
+      - GAME_COLOR=#7c3aed
